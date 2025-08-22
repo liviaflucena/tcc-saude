@@ -1,0 +1,78 @@
+services:
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: tcc
+      POSTGRES_USER: tcc
+      POSTGRES_PASSWORD: tcc
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tcc -d tcc"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgresql+psycopg2://tcc:tcc@db:5432/tcc
+      CORS_ORIGINS: http://localhost
+      SOLR_URL: http://solr:8983/solr/tcc-saude
+      dockerfile: Dockerfile
+    env_file: .env
+    depends_on:        # precisa ser array
+      - db
+      - solr
+    expose:
+      - "8000"
+    ports:
+      - "8000:8000"
+
+  api2:  
+    build:    ./api                  # <— réplica
+    image: tcc-saude-api               # use a mesma imagem gerada por `api`
+    depends_on: [db, redis]
+    environment:
+      DATABASE_URL: postgresql+psycopg2://tcc:tcc@db:5432/tcc
+      REDIS_URL: redis://redis:6379/0
+    expose: ["8000"]
+
+  nginx:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+
+  ingestor:
+    build: ./ingestor
+    environment:
+      DATABASE_URL: postgresql+psycopg2://tcc:tcc@db:5432/tcc
+      SOLR_URL: http://solr:8983/solr/tcc-saude
+      DENGUE2025_URL: https://s3.sa-east-1.amazonaws.com/ckan.saude.gov.br/SINAN/Dengue/csv/DENGBR25.csv.zip
+    depends_on: [db, solr]
+    command: ["python", "/app/run_once.py"] 
+
+  solr:
+    image: solr:9
+    ports: ["8983:8983"]          # opcional para abrir o painel
+    command: ["solr-precreate", "tcc-saude"]
+    volumes:
+      - solrdata:/var/solr
+
+
+volumes:
+  pgdata:
+  redisdata:
+  solrdata:

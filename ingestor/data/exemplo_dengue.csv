@@ -1,0 +1,11 @@
+id_ibge,name,uf,population,year,month,cases,deaths
+250750,Guarabira,PB,59000,2025,1,12,0
+250750,Guarabira,PB,59000,2025,2,18,0
+250750,Guarabira,PB,59000,2025,3,24,1
+250400,Campina Grande,PB,420000,2025,1,80,0
+250400,Campina Grande,PB,420000,2025,2,110,1
+250400,Campina Grande,PB,420000,2025,3,150,2
+250750,Guarabira,PB,59000,2025,4,10,0
+251620,João Pessoa,PB,833000,2025,1,120,0
+251620,João Pessoa,PB,833000,2025,2,170,1
+251620,João Pessoa,PB,833000,2025,3,210,2
